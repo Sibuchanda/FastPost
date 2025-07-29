@@ -4,13 +4,11 @@ import connectDB from './config/db.js';
 import {createClient} from "redis";
 
 import userRoutes from './routes/user.js';
-import connectRabbitMQ from './config/rabbitmq.js'
+import { connectRabbitMQ } from './config/rabbitmq.js';
 
 dotenv.config();
-
 //Database Connection
 connectDB();
-
 //RabbitMQ connection
 connectRabbitMQ();
 
@@ -26,10 +24,11 @@ redisClient.connect().then(()=>{
 })
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT;
 
 
-app.use("api/v1", userRoutes);
+app.use("/api/v1", userRoutes);
 
 app.listen(PORT, ()=>{
     console.log(`Listening to PORT : ${PORT}`)
