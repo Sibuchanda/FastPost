@@ -1,7 +1,12 @@
+import { Suspense } from "react";
+import VerifyOtp from "../component/VerifyOtp";
+import Loading from "./Loading";
 
 const VerifyPage = () => {
   return (
-     <div>Verify page</div>
+     <Suspense fallback={<Loading/>}>
+       <VerifyOtp/>
+     </Suspense>
   );
 };
 

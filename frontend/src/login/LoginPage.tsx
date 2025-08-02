@@ -2,33 +2,38 @@ import axios from "axios";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-
+import { useAppData, user_service } from "../context/AppContext";
+import Loading from "../verify/Loading";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const navigateTo = useNavigate();
 
-   const [email, setEmail] = useState<string>("");
-   const [loading, setLoading] = useState<boolean>(false);
-   const navigateTo = useNavigate();
+  const { isAuth, loading: userLoading } = useAppData();
 
-   const handleSubmit = async(e: React.FormEvent<HTMLElement>): Promise<void> =>{
-     e.preventDefault();
-     setLoading(true);
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLElement>
+  ): Promise<void> => {
+    e.preventDefault();
+    setLoading(true);
 
-     try {
-       const {data} = await axios.post(`http://localhost:5000/api/v1/login`,{
+    try {
+      const { data } = await axios.post(`${user_service}/api/v1/login`, {
         email,
-       })
-       alert(data.message);
-       navigateTo(`/verify?email=${email}`);
-     } catch (error:any) {
-       alert(error.response.data.message);
-     }finally{
+      });
+      toast.success(data.message);
+      navigateTo(`/verify?email=${email}`);
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    } finally {
       setLoading(false);
-     }
+    }
+  };
 
-   }
-
+  if (userLoading) return <Loading />;
+  if (isAuth) navigateTo("/chat");
   return (
     <>
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
