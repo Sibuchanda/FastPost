@@ -8,7 +8,7 @@ import { useAppData, user_service } from "../context/AppContext";
 import Loading from "../verify/Loading";
 
 const VerifyOtp = () => {
-  const { isAuth, setIsAuth, setUser, loading: userLoading } = useAppData();
+  const { isAuth, setIsAuth, setUser, loading: userLoading, fetchChats, fetchUsers } = useAppData();
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [error, setError] = useState<string>("");
@@ -98,8 +98,9 @@ const VerifyOtp = () => {
       inputRefs.current[0]?.focus();
       setUser(data.user);
       setIsAuth(true);
-      // fetchChats();
-      // fetchUsers();
+      // Without the below two methods after logi, we have to reload the page so that all chats and users are fetch
+      fetchChats();
+      fetchUsers();
     } catch (error: any) {
       setError(error.response.data.message);
     } finally {
