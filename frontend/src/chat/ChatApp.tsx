@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { useAppData, type User } from "../context/AppContext";
+import { chat_service, useAppData, type User } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import Loading from "../verify/Loading";
 import ChatSidebar from "../component/ChatSidebar";
+import Cookies from "js-cookie";
+import axios from "axios";
+import toast from "react-hot-toast";
+import ChatHeader from "../component/Chatheader";
 
 export interface Message {
   _id: string;
@@ -51,9 +55,61 @@ const ChatApp = () => {
 
   const handleLogout = () => logoutUser();
 
+  // --------- Fetching User Chats ------------
+  async function fetchChat() {
+    const token = Cookies.get("token");
+    try {
+      const { data } = await axios.get(
+        `${chat_service}/api/v1/message/${selectedUser}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setMessages(data.messages);
+      setUser(data.user);
+      await fetchChats();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to load messages");
+    }
+  }
+
+  //  ====== Create Chat =======
+  async function createChat(u: User) {
+    try {
+      const token = Cookies.get("token");
+      const { data } = await axios.post(
+        `${chat_service}/api/v1/chat/new`,
+        {
+          userId: loggedInUser?._id,
+          otherUserId: u._id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setSelectedUser(data.chatId);
+      setShowAllUser(false);
+      await fetchChats();
+    } catch (error) {
+      toast.error("Failed to start chat");
+    }
+  }
+  useEffect(() => {
+    if (selectedUser) {
+      fetchChat();
+    }
+  }, [selectedUser]);
+
   if (loading) return <Loading />;
   return (
-    <>
+    <div className="min-h-screen flex bg-gray-900 text-white relative overflow-hidden">
       <ChatSidebar
         sidebarOpen={siderbarOpen}
         setSidebarOpen={setSiderbarOpen}
@@ -65,8 +121,17 @@ const ChatApp = () => {
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
         handleLogout={handleLogout}
+        createChat={createChat}
       />
-    </>
+      <div className="flex-1 flex flex-col justify-between p-4 backdrop-blur-xl bg-white/5 border-1 border-white/10">
+        <ChatHeader
+        user={user}
+        setSidebarOpen={setSiderbarOpen}
+        isTyping={isTyping}
+        // onlineUsers={onlineUsers}
+        />
+      </div>
+    </div>
   );
 };
 
