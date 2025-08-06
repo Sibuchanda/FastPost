@@ -6,7 +6,9 @@ import ChatSidebar from "../component/ChatSidebar";
 import Cookies from "js-cookie";
 import axios from "axios";
 import toast from "react-hot-toast";
-import ChatHeader from "../component/Chatheader";
+import ChatHeader from "../component/ChatHeader";
+import ChatMessages from "../component/ChatMessages";
+import MessageInput from "../component/MessageInput";
 
 export interface Message {
   _id: string;
@@ -101,6 +103,100 @@ const ChatApp = () => {
       toast.error("Failed to start chat");
     }
   }
+
+  
+  // ------- Handle Message Send -----
+    const handleMessageSend = async (e: any, imageFile?: File | null) => {
+    e.preventDefault();
+
+    if (!message.trim() && !imageFile) return;
+
+    if (!selectedUser) return;
+
+    // socket work
+    // if (typingTimeOut) {
+    //   clearTimeout(typingTimeOut);
+    //   setTypingTimeOut(null);
+    // }
+
+    // socket?.emit("stopTyping", {
+    //   chatId: selectedUser,
+    //   userId: loggedInUser?._id,
+    // });
+
+    const token = Cookies.get("token");
+
+    try {
+      const formData = new FormData();
+
+      formData.append("chatId", selectedUser);
+
+      if (message.trim()) {
+        formData.append("text", message);
+      }
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      const { data } = await axios.post(
+        `${chat_service}/api/v1/message`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setMessages((prev) => {
+        const currentMessages = prev || [];
+        const messageExists = currentMessages.some(
+          (msg) => msg._id === data.message._id
+        );
+
+        if (!messageExists) {
+          return [...currentMessages, data.message];
+        }
+        return currentMessages;
+      });
+
+      setMessage("");
+
+      const displayText = imageFile ? "📷 image" : message;
+
+      // moveChatToTop(
+      //   selectedUser!,
+      //   {
+      //     text: displayText,
+      //     sender: data.sender,
+      //   },
+      //   false
+      // );
+    } catch (error: any) {
+      toast.error(error.response.data.message);
+    }
+  };
+
+
+
+ // --- Handle Typing ----
+   const handleTyping = (value: string) => {
+    setMessage(value);
+
+    if (!selectedUser) return;
+
+    // socket setup
+    // if (value.trim()) {
+    //   socket.emit("typing", {
+    //     chatId: selectedUser,
+    //     userId: loggedInUser?._id,
+    //   });
+    // }
+  };
+
+
   useEffect(() => {
     if (selectedUser) {
       fetchChat();
@@ -125,10 +221,23 @@ const ChatApp = () => {
       />
       <div className="flex-1 flex flex-col justify-between p-4 backdrop-blur-xl bg-white/5 border-1 border-white/10">
         <ChatHeader
-        user={user}
-        setSidebarOpen={setSiderbarOpen}
-        isTyping={isTyping}
-        // onlineUsers={onlineUsers}
+          user={user}
+          setSidebarOpen={setSiderbarOpen}
+          isTyping={isTyping}
+          // onlineUsers={onlineUsers}
+        />
+
+        <ChatMessages
+          selectedUser={selectedUser}
+          messages={messages}
+          loggedInUser={loggedInUser}
+        />
+
+        <MessageInput
+          selectedUser={selectedUser}
+          message={message}
+          setMessage={handleTyping}
+          handleMessageSend={handleMessageSend}
         />
       </div>
     </div>
