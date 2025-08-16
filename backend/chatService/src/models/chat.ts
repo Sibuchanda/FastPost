@@ -4,7 +4,7 @@ export interface IChat extends Document {
     users: string[];
     latestMessage: {
         text: string,
-        sender: string;
+        sender: string; // Who sends the message
     };
     createdAt: Date;
     updatedAt: Date;

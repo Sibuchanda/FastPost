@@ -1,8 +1,8 @@
 import mongoose, {Document, Schema, Types } from "mongoose";
 
 export interface IMessage extends Document{
-    chatId: Types.ObjectId;
-    sender: string;
+    chatId: Types.ObjectId; // Actual chat group ID
+    sender: string; // Person who sends the message 
     text?: string;
     image?: {
         url: string;
