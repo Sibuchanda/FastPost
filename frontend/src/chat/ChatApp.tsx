@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import ChatHeader from "../component/ChatHeader";
 import ChatMessages from "../component/ChatMessages";
 import MessageInput from "../component/MessageInput";
+import { SocketData } from "../context/SocketContext";
+import { Socket } from "socket.io-client";
 
 export interface Message {
   _id: string;
@@ -36,6 +38,8 @@ const ChatApp = () => {
     fetchChats,
     setChats,
   } = useAppData();
+
+   const {onlineUsers, socket } = SocketData();
   const navigateTo = useNavigate();
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -83,6 +87,7 @@ const ChatApp = () => {
   async function createChat(u: User) {
     try {
       const token = Cookies.get("token");
+      console.log(token);
       const { data } = await axios.post(
         `${chat_service}/api/v1/chat/new`,
         {
@@ -100,6 +105,7 @@ const ChatApp = () => {
       setShowAllUser(false);
       await fetchChats();
     } catch (error) {
+      console.log(error);
       toast.error("Failed to start chat");
     }
   }
@@ -110,19 +116,17 @@ const ChatApp = () => {
     e.preventDefault();
 
     if (!message.trim() && !imageFile) return;
-
     if (!selectedUser) return;
 
-    // socket work
-    // if (typingTimeOut) {
-    //   clearTimeout(typingTimeOut);
-    //   setTypingTimeOut(null);
-    // }
+    if (typingTimeOut) {
+      clearTimeout(typingTimeOut);
+      setTypingTimeOut(null);
+    }
 
-    // socket?.emit("stopTyping", {
-    //   chatId: selectedUser,
-    //   userId: loggedInUser?._id,
-    // });
+    socket?.emit("stopTyping", {
+      chatId: selectedUser,
+      userId: loggedInUser?._id,
+    });
 
     const token = Cookies.get("token");
 
@@ -184,24 +188,72 @@ const ChatApp = () => {
  // --- Handle Typing ----
    const handleTyping = (value: string) => {
     setMessage(value);
+    if (!selectedUser || !socket) return;
 
-    if (!selectedUser) return;
-
-    // socket setup
-    // if (value.trim()) {
-    //   socket.emit("typing", {
-    //     chatId: selectedUser,
-    //     userId: loggedInUser?._id,
-    //   });
-    // }
+    if (value.trim()) {
+      socket.emit("typing", {
+        chatId: selectedUser,
+        userId: loggedInUser?._id,
+      });
+    }
+    if(typingTimeOut){
+      clearTimeout(typingTimeOut);
+    }
+   const timeout = setTimeout(() => {
+      socket.emit("stopTyping", {
+        chatId: selectedUser,
+        userId: loggedInUser?._id,
+      });
+    }, 2000);
+    setTypingTimeOut(timeout);
   };
+
+    useEffect(() => {
+    socket?.on("userTyping", (data) => {
+      console.log("recieved user typing", data);
+      if (data.chatId === selectedUser && data.userId !== loggedInUser?._id) {
+        setIsTyping(true);
+      }
+    });
+
+    socket?.on("userStoppedTyping", (data) => {
+      console.log("recieved user stopped typing", data);
+      if (data.chatId === selectedUser && data.userId !== loggedInUser?._id) {
+        setIsTyping(false);
+      }
+    });
+
+    return () => {
+      // socket?.off("newMessage");
+      // socket?.off("messagesSeen");
+      socket?.off("userTyping");
+      socket?.off("userStoppedTyping");
+    };
+  }, [socket, selectedUser, setChats, loggedInUser?._id]);
 
 
   useEffect(() => {
     if (selectedUser) {
       fetchChat();
+      setIsTyping(false);
+
+      // resetUnseenCount(selectedUser);
+      socket?.emit("joinChat", selectedUser);
+
+      return () => {
+        socket?.emit("leaveChat", selectedUser);
+        setMessages(null);
+      };
     }
-  }, [selectedUser]);
+  }, [selectedUser, socket]);
+
+   useEffect(() => {
+    return () => {
+      if (typingTimeOut) {
+        clearTimeout(typingTimeOut);
+      }
+    };
+  }, [typingTimeOut]);
 
   if (loading) return <Loading />;
   return (
@@ -218,13 +270,14 @@ const ChatApp = () => {
         setSelectedUser={setSelectedUser}
         handleLogout={handleLogout}
         createChat={createChat}
+        onlineUsers={onlineUsers}
       />
       <div className="flex-1 flex flex-col justify-between p-4 backdrop-blur-xl bg-white/5 border-1 border-white/10">
         <ChatHeader
           user={user}
           setSidebarOpen={setSiderbarOpen}
           isTyping={isTyping}
-          // onlineUsers={onlineUsers}
+          onlineUsers={onlineUsers}
         />
 
         <ChatMessages

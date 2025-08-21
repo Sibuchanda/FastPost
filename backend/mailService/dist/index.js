@@ -6,7 +6,7 @@ sendOptConsumer();
 const app = express();
 const PORT = process.env.PORT;
 app.get("/", (req, res) => {
-    res.send("Hello man");
+    res.send("This is main sevice");
 });
 app.listen(PORT, () => {
     console.log(`Listening to PORT : ${PORT}`);

@@ -6,11 +6,12 @@ interface ChatHeaderProps {
   user: User | null;
   setSidebarOpen: (open: boolean) => void;
   isTyping: boolean;
-//   onlineUsers: string[];
+  onlineUsers: string[];
 }
 
 
-const ChatHeader = ({user, setSidebarOpen, isTyping,}:ChatHeaderProps) => {
+const ChatHeader = ({user, setSidebarOpen, isTyping, onlineUsers}:ChatHeaderProps) => {
+  const isOnlineUser = user && onlineUsers.includes(user._id);
   return (
     <>
      {/* --- Mobile menu toogle button --- */}
@@ -35,12 +36,12 @@ const ChatHeader = ({user, setSidebarOpen, isTyping,}:ChatHeaderProps) => {
                 >
                   <UserCircle className="w-8 h-8 text-gray-300" />
                 </div>
-                {/* online user setup */}
-                {/* {isOnlineUser && (
+                {/* online user */}
+                {isOnlineUser && (
                   <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 border-2 border-gray-800">
                     <span className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-75"></span>
                   </span>
-                )} */}
+                )}
               </div>
 
               {/* user info */}
@@ -49,8 +50,7 @@ const ChatHeader = ({user, setSidebarOpen, isTyping,}:ChatHeaderProps) => {
                   <h2 className="text-2xl font-bold text-white truncate">
                     {user.name}
                   </h2>
-                </div>
-{/*              
+                </div>             
                 <div className="flex items-center gap-2">
                   {isTyping ? (
                     <div className="flex items-center gap-2 text-sm">
@@ -85,7 +85,7 @@ const ChatHeader = ({user, setSidebarOpen, isTyping,}:ChatHeaderProps) => {
                       </span>
                     </div>
                   )}
-                </div> */}
+                </div>
               </div>
             </>
           ) : (
