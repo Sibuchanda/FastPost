@@ -4,6 +4,7 @@ import './App.css'
 import ChatApp from './chat/ChatApp'
 import LoginPage from './login/LoginPage';
 import VerifyPage from './verify/VerifyPage';
+import ProfilePage from './profile/ProfilePage';
 
 
 function App() {
@@ -24,6 +25,10 @@ function App() {
     {
       path: "/chat",
       element: <ChatApp/>
+    },
+    {
+      path: "/profile",
+      element: <ProfilePage/>
     }
   ]);
 

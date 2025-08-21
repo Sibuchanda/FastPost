@@ -39,7 +39,7 @@ const ChatApp = () => {
     setChats,
   } = useAppData();
 
-   const {onlineUsers, socket } = SocketData();
+  const { onlineUsers, socket } = SocketData();
   const navigateTo = useNavigate();
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -83,6 +83,66 @@ const ChatApp = () => {
     }
   }
 
+  // === Moving Chats to Top =======
+  const moveChatToTop = (
+    chatId: string,
+    newMessage: any,
+    updatedUnseenCount = true
+  ) => {
+    setChats((prev) => {
+      if (!prev) return null;
+
+      const updatedChats = [...prev];
+      const chatIndex = updatedChats.findIndex(
+        (chat) => chat.chat._id === chatId
+      );
+
+      if (chatIndex !== -1) {
+        const [moveChat] = updatedChats.splice(chatIndex, 1);
+
+        const updatedChat = {
+          ...moveChat,
+          chat: {
+            ...moveChat.chat,
+            latestMessage: {
+              text: newMessage.text,
+              sender: newMessage.sender,
+            },
+            updatedAt: new Date().toString(),
+
+            unseenCount:
+              updatedUnseenCount && newMessage.sender !== loggedInUser?._id
+                ? (moveChat.chat.unseenCount || 0) + 1
+                : moveChat.chat.unseenCount || 0,
+          },
+        };
+        updatedChats.unshift(updatedChat);
+      }
+
+      return updatedChats;
+    });
+  };
+
+ // ========== Reset Unseen Count ========
+   const resetUnseenCount = (chatId: string) => {
+    setChats((prev) => {
+      if (!prev) return null;
+
+      return prev.map((chat) => {
+        if (chat.chat._id === chatId) {
+          return {
+            ...chat,
+            chat: {
+              ...chat.chat,
+              unseenCount: 0,
+            },
+          };
+        }
+        return chat;
+      });
+    });
+  };
+
   //  ====== Create Chat =======
   async function createChat(u: User) {
     try {
@@ -110,9 +170,8 @@ const ChatApp = () => {
     }
   }
 
-  
   // ------- Handle Message Send -----
-    const handleMessageSend = async (e: any, imageFile?: File | null) => {
+  const handleMessageSend = async (e: any, imageFile?: File | null) => {
     e.preventDefault();
 
     if (!message.trim() && !imageFile) return;
@@ -167,26 +226,22 @@ const ChatApp = () => {
       });
 
       setMessage("");
-
       const displayText = imageFile ? "📷 image" : message;
-
-      // moveChatToTop(
-      //   selectedUser!,
-      //   {
-      //     text: displayText,
-      //     sender: data.sender,
-      //   },
-      //   false
-      // );
+      moveChatToTop(
+        selectedUser!,
+        {
+          text: displayText,
+          sender: data.sender,
+        },
+        false
+      );
     } catch (error: any) {
       toast.error(error.response.data.message);
     }
   };
 
-
-
- // --- Handle Typing ----
-   const handleTyping = (value: string) => {
+  // --- Handle Typing ----
+  const handleTyping = (value: string) => {
     setMessage(value);
     if (!selectedUser || !socket) return;
 
@@ -196,10 +251,10 @@ const ChatApp = () => {
         userId: loggedInUser?._id,
       });
     }
-    if(typingTimeOut){
+    if (typingTimeOut) {
       clearTimeout(typingTimeOut);
     }
-   const timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       socket.emit("stopTyping", {
         chatId: selectedUser,
         userId: loggedInUser?._id,
@@ -208,7 +263,59 @@ const ChatApp = () => {
     setTypingTimeOut(timeout);
   };
 
-    useEffect(() => {
+  useEffect(() => {
+    socket?.on("newMessage", (message) => {
+      console.log("Recieved new message:", message);
+
+      if (selectedUser === message.chatId) {
+        setMessages((prev) => {
+          const currentMessages = prev || [];
+          const messageExists = currentMessages.some(
+            (msg) => msg._id === message._id
+          );
+
+          if (!messageExists) {
+            return [...currentMessages, message];
+          }
+          return currentMessages;
+        });
+
+        moveChatToTop(message.chatId, message, false);
+      } else {
+        moveChatToTop(message.chatId, message, true);
+      }
+    });
+
+    socket?.on("messagesSeen", (data) => {
+      console.log("Message seen by:", data);
+
+      if (selectedUser === data.chatId) {
+        setMessages((prev) => {
+          if (!prev) return null;
+          return prev.map((msg) => {
+            if (
+              msg.sender === loggedInUser?._id &&
+              data.messageIds &&
+              data.messageIds.includes(msg._id)
+            ) {
+              return {
+                ...msg,
+                seen: true,
+                seenAt: new Date().toString(),
+              };
+            } else if (msg.sender === loggedInUser?._id && !data.messageIds) {
+              return {
+                ...msg,
+                seen: true,
+                seenAt: new Date().toString(),
+              };
+            }
+            return msg;
+          });
+        });
+      }
+    });
+
     socket?.on("userTyping", (data) => {
       console.log("recieved user typing", data);
       if (data.chatId === selectedUser && data.userId !== loggedInUser?._id) {
@@ -224,20 +331,19 @@ const ChatApp = () => {
     });
 
     return () => {
-      // socket?.off("newMessage");
-      // socket?.off("messagesSeen");
+      socket?.off("newMessage");
+      socket?.off("messagesSeen");
       socket?.off("userTyping");
       socket?.off("userStoppedTyping");
     };
   }, [socket, selectedUser, setChats, loggedInUser?._id]);
-
 
   useEffect(() => {
     if (selectedUser) {
       fetchChat();
       setIsTyping(false);
 
-      // resetUnseenCount(selectedUser);
+      resetUnseenCount(selectedUser);
       socket?.emit("joinChat", selectedUser);
 
       return () => {
@@ -247,7 +353,7 @@ const ChatApp = () => {
     }
   }, [selectedUser, socket]);
 
-   useEffect(() => {
+  useEffect(() => {
     return () => {
       if (typingTimeOut) {
         clearTimeout(typingTimeOut);
