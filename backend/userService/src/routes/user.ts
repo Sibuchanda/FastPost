@@ -1,11 +1,13 @@
 import express from "express";
-import {getAllUsers, getAUser, loginUser, myProfile, updateName, verifyUser} from '../controlers/user.js';
+import {getAllUsers, getAUser, loginUser, myProfile, updateName, verifySignupUser, signupUser, resendOTP} from '../controlers/user.js';
 import { isAuth } from "../middleware/isAuth.js";
 
 const router = express.Router();
 
+router.post("/signup", signupUser);
 router.post("/login", loginUser);
-router.post("/verify", verifyUser);
+router.post("/verify", verifySignupUser);
+router.post("/resendOTP", resendOTP);
 router.get("/me", isAuth, myProfile);
 router.get("/user/all", isAuth, getAllUsers);
 router.get("/user/:id", getAUser);

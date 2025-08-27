@@ -1,14 +1,13 @@
 import axios from "axios";
-import { ArrowRight, ChevronLeft, Loader2, Lock } from "lucide-react";
+import { ArrowRight, ChevronLeft, Loader2} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Cookies from "js-cookie";
 import { useAppData, user_service } from "../context/AppContext";
 import Loading from "../verify/Loading";
 
 const VerifyOtp = () => {
-  const { isAuth, setIsAuth, setUser, loading: userLoading, fetchChats, fetchUsers } = useAppData();
+  const { isAuth, loading: userLoading } = useAppData();
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [error, setError] = useState<string>("");
@@ -16,7 +15,6 @@ const VerifyOtp = () => {
   const [timer, setTimer] = useState(60);
   const [redirecting, setRedirecting] = useState(false);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-
   const navigateTo = useNavigate();
 
   const [searchParams] = useSearchParams();
@@ -89,18 +87,7 @@ const VerifyOtp = () => {
         otp: otpString,
       });
       toast.success(data.message);
-      Cookies.set("token", data.token, {
-        expires: 15,
-        secure: false,
-        path: "/",
-      });
-      setOtp(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
-      setUser(data.user);
-      setIsAuth(true);
-      // Without the below two methods after logi, we have to reload the page so that all chats and users are fetch
-      fetchChats();
-      fetchUsers();
+      navigateTo("/login");
     } catch (error: any) {
       setError(error.response.data.message);
     } finally {
@@ -112,7 +99,7 @@ const VerifyOtp = () => {
     setResendLoading(true);
     setError("");
     try {
-      const { data } = await axios.post(`${user_service}/api/v1/login`, {
+      const { data } = await axios.post(`${user_service}/api/v1/resendOTP`, {
         email,
       });
       toast.success(data.message);
@@ -144,7 +131,7 @@ const VerifyOtp = () => {
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <div className="mx-auto w-20 h-20 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-                <Lock size={40} className="text-white" />
+                 <img className="text-white rounded-2xl bg-white" src="/appLogo.png" />
               </div>
               <h1 className="text-4xl font-bold text-white mb-3">
                 Verify Your Email
@@ -185,7 +172,7 @@ const VerifyOtp = () => {
               )}
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 disabled={loading}
               >
                 {loading ? (

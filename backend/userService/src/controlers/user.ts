@@ -5,75 +5,150 @@ import { redisClient } from "../index.js";
 import User from "../model/User.js";
 import { generateToken } from "../config/generateToken.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.js";
+import bcrypt from "bcryptjs";
 
 
-export const loginUser = TryCatch(async(req,res)=>{
-    const {email} = req.body;
-    
+// -- SignUp ---
+export const signupUser = TryCatch(async (req, res) => {
+    const { name, email, password, gender } = req.body;
+    if (!name || !email || !password || !gender) {
+        res.status(400).json({ message: "All fields are required" });
+        return;
+    }
     const rateLimitKey = `otp:ratelimit:${email}`;
     const rateLimit = await redisClient.get(rateLimitKey);
-    if(rateLimit){
+    if (rateLimit) {
         res.status(429).json({
             message: "Too many requests. Please wait before requesting for a new OTP"
         });
         return;
     }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpKey = `signup:otp:${email}`;
+    const userData = JSON.stringify({ name, email, password, gender });
+    await redisClient.set(otpKey, JSON.stringify({ otp, userData }), { EX: 300 });
 
-    const otp = Math.floor(100000 + Math.random()*900000).toString();
-    const otpKey = `otp:${email}`;
-    await redisClient.set(otpKey,otp,{
-        EX:300,
-    });
-    //Setting the rateLimit so that user can't send email contineouslly
-    await redisClient.set(rateLimitKey, "true",{
-        EX: 60,
-    });
-
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
     const message = {
         to: email,
         subject: "Your OTP verification code",
-        body: `Dear ${email}, Your 6 digit OTP is : ${otp}. It is valid for 5 minutes`
-    }
+        body: `Dear ${name}, Your 6 digit OTP is : ${otp}. It is valid for 5 minutes`
+    };
     await publishToQueue("send-otp", message);
-    res.status(200).json({
-        message: "OTP sent to your mail successfully"
-    })
+    res.status(200).json({ message: "OTP sent to your mail successfully" });
 });
 
 
-export const verifyUser = TryCatch(async(req,res)=>{
-    const {email, otp:enteredOtp} = req.body;
+export const verifySignupUser = TryCatch(async (req, res) => {
+    const { email, otp: enteredOtp } = req.body;
 
-    if(!email || !enteredOtp){
-        res.status(400).json({
-            message: "Email and OTP required!",
-        });
+    if (!email || !enteredOtp) {
+        res.status(400).json({ message: "OTP required!" });
         return;
     }
-
-    const otpKey = `otp:${email}`;
-    const storedOTP = await redisClient.get(otpKey);
-    if(!storedOTP || storedOTP!==enteredOtp){
-        res.status(400).json({
-            message: "Invalid or expired OTP",
-        });
+    const otpKey = `signup:otp:${email}`;
+    const storedData = await redisClient.get(otpKey);
+    if (!storedData) {
+        res.status(400).json({ message: "Invalid or expired OTP" });
         return;
     }
-    await redisClient.del(otpKey);
-
-    let user = await User.findOne({email});
-    if(!user){
-        const name = email.slice(0,8);
-        user = await User.create({name,email});
+    const { otp, userData } = JSON.parse(storedData);
+    if (otp !== enteredOtp) {
+        res.status(400).json({ message: "Invalid OTP" });
+        return;
     }
-    const token = generateToken(user);
-    res.json({
-        message: "User Vrified",
-        user,
-        token,
+    const { name, password, gender } = JSON.parse(userData);
+    let user = await User.findOne({ email });
+    if (user) {
+        res.status(400).json({ message: "User already exists" });
+        return;
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user = await User.create({ 
+        name, 
+        email, 
+        password: hashedPassword, 
+        gender 
     });
 
+    await redisClient.del(otpKey);
+    res.status(201).json({ message: "User registered successfully." });
 });
+
+
+export const loginUser = TryCatch(async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        res.status(400).json({ message: "Email and Password required!" });
+        return;
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        res.status(400).json({ message: "User not found, please signup" });
+        return;
+    }
+     const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        res.status(400).json({ message: "Invalid credentials" });
+        return;
+    }
+
+    const token = generateToken(user);
+    res.status(200).json({
+        message: "Signin successful",
+        user,
+        token
+    });
+});
+
+export const resendOTP = TryCatch(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        res.status(400).json({ message: "Email is required!" });
+        return;
+    }
+    const rateLimitKey = `otp:ratelimit:${email}`;
+    const rateLimit = await redisClient.get(rateLimitKey);
+    if (rateLimit) {
+        res.status(429).json({
+            message: "Too many requests. Please wait before requesting a new OTP",
+        });
+        return;
+    }
+    const otpKey = `signup:otp:${email}`;
+    const storedData = await redisClient.get(otpKey);
+    if (!storedData) {
+        res.status(400).json({
+            message: "Session expired. Please restart signup process.",
+        });
+        return;
+    }
+    let userData;
+    try {
+        const parsed = JSON.parse(storedData);
+        userData = parsed.userData;
+    } catch (err) {
+        res.status(500).json({ message: "Error parsing stored user data" });
+        return;
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // It will generate a 6 digit OTP from range 100000 to 999999
+    await redisClient.set(
+        otpKey,
+        JSON.stringify({ otp, userData }),
+        { EX: 300 } // OTP valid for 5 minutes
+    );
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+    const parsedUser = JSON.parse(userData);
+    const name = parsedUser?.name || "User";
+    const message = {
+        to: email,
+        subject: "Your new OTP verification code",
+        body: `Dear ${name}, Your new 6 digit OTP is: ${otp}. It is valid for 5 minutes`,
+    };
+    await publishToQueue("send-otp", message);
+    res.status(200).json({ message: "New OTP sent to your email successfully" });
+});
+
 
 export const myProfile = TryCatch(async(req: AuthenticatedRequest,res)=>{
    const user = req.user;

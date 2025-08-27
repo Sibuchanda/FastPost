@@ -5,6 +5,7 @@ import ChatApp from './chat/ChatApp'
 import LoginPage from './login/LoginPage';
 import VerifyPage from './verify/VerifyPage';
 import ProfilePage from './profile/ProfilePage';
+import SignupPage from './login/SignupPage';
 
 
 function App() {
@@ -12,11 +13,15 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <LoginPage/>
+      element: <SignupPage/>
     },
     {
       path: "/login",
       element: <LoginPage/>
+    },
+    {
+      path: "/signup",
+      element: <SignupPage/>
     },
     {
       path: "/verify",

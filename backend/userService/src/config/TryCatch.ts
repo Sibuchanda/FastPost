@@ -1,4 +1,3 @@
-import { error } from "console";
 import { RequestHandler, Request, Response, NextFunction } from "express";
 
 const TryCatch = (handler: RequestHandler): RequestHandler =>{

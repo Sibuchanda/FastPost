@@ -1,6 +1,6 @@
 # Chat Models — Documentation
 
-This document explains the **Chat** model  including the purpose of each field in simple language.
+This document explains the **Chat** model  including the purpose of each field.
 
 ---
 
