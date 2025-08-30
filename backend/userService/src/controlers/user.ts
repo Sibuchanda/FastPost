@@ -23,7 +23,7 @@ export const signupUser = TryCatch(async (req, res) => {
         });
         return;
     }
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generates a interger between 100000 to 999999
     const otpKey = `signup:otp:${email}`;
     const userData = JSON.stringify({ name, email, password, gender });
     await redisClient.set(otpKey, JSON.stringify({ otp, userData }), { EX: 300 });
@@ -38,7 +38,7 @@ export const signupUser = TryCatch(async (req, res) => {
     res.status(200).json({ message: "OTP sent to your mail successfully" });
 });
 
-
+//----- Verify User ------
 export const verifySignupUser = TryCatch(async (req, res) => {
     const { email, otp: enteredOtp } = req.body;
 
@@ -75,7 +75,7 @@ export const verifySignupUser = TryCatch(async (req, res) => {
     res.status(201).json({ message: "User registered successfully." });
 });
 
-
+// -----Login User ------
 export const loginUser = TryCatch(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -101,6 +101,7 @@ export const loginUser = TryCatch(async (req, res) => {
     });
 });
 
+//---Resend OTP----
 export const resendOTP = TryCatch(async (req, res) => {
     const { email } = req.body;
     if (!email) {

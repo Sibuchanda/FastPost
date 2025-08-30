@@ -5,33 +5,22 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppData, user_service } from "../context/AppContext";
 import Loading from "../verify/Loading";
+import Cookies from "js-cookie";
 
-type Gender = "male" | "female";
-
-interface SignUpForm {
-  name: string;
+interface SignInForm {
   email: string;
   password: string;
-  confirmPassword: string;
-  gender: Gender;
 }
 
-const SignUp = () => {
-  const [form, setForm] = useState<SignUpForm>({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    gender: "male",
-  });
+const LoginPage = () => {
+  
+  const [form, setForm] = useState<SignInForm>({ email: "", password: "" });
   const [loading, setLoading] = useState<boolean>(false);
   const navigateTo = useNavigate();
 
-  const { isAuth, loading: userLoading } = useAppData();
+    const { isAuth, loading: userLoading, setIsAuth, setUser, fetchChats, fetchUsers } =  useAppData();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -39,23 +28,18 @@ const SignUp = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (form.password !== form.confirmPassword) {
-      toast.error("Passwords and Confirm Password must be same.");
-      return;
-    }
-
     try {
       setLoading(true);
-      const { data } = await axios.post(`${user_service}/api/v1/signup`, {
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        gender: form.gender,
-      });
-      toast.success(data?.message || "OTP sent to your email");
-      navigateTo(`/verify?email=${encodeURIComponent(form.email)}`);
+      const { data } = await axios.post(`${user_service}/api/v1/login`, form);
+      Cookies.set("token", data.token, { expires: 15, secure: false, path: "/" });
+      setUser(data.user);
+      setIsAuth(true);
+      await fetchChats();
+      await fetchUsers();
+      navigateTo("/chat");
+      toast.success(data?.message || "Signed in successfully");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Signup failed");
+      toast.error(error?.response?.data?.message || "Signin failed");
     } finally {
       setLoading(false);
     }
@@ -72,20 +56,11 @@ const SignUp = () => {
             <div className="mx-auto w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center mb-6">
               <img className="text-white rounded-2xl bg-white" src="/appLogo.png" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-3">Create Account</h1>
-            <p className="text-gray-300 text-lg">Sign up to continue</p>
+            <h1 className="text-4xl font-bold text-white mb-3">Welcome Back</h1>
+            <p className="text-gray-300 text-lg">Sign in to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              name="name"
-              placeholder="Username"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-            />
             <input
               type="email"
               name="email"
@@ -95,29 +70,11 @@ const SignUp = () => {
               required
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
             />
-            <select
-              name="gender"
-              value={form.gender}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white"
-            >
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
             <input
               type="password"
               name="password"
               placeholder="Password"
               value={form.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-            />
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm password"
-              value={form.confirmPassword}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
@@ -131,23 +88,23 @@ const SignUp = () => {
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating account...
+                  Signing in...
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span>Sign Up</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-5 h-5" />
                 </div>
               )}
             </button>
           </form>
 
-          {/* Switch to Sign In */}
+          {/* Switch to Sign Up */}
           <div className="mt-6 space-y-2">
             <p className="text-gray-400 text-center">
-              Already have an account?{" "}
-              <Link to="/login" className="text-blue-400 hover:underline">
-                Sign In
+              Don’t have an account?{" "}
+              <Link to="/signup" className="text-blue-400 hover:underline">
+                Sign Up
               </Link>
             </p>
           </div>
@@ -157,4 +114,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default LoginPage;

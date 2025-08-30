@@ -2,10 +2,10 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import './App.css'
 
 import ChatApp from './chat/ChatApp'
-import LoginPage from './login/LoginPage';
+import LoginPage from './auth/LoginPage';
 import VerifyPage from './verify/VerifyPage';
 import ProfilePage from './profile/ProfilePage';
-import SignupPage from './login/SignupPage';
+import SignupPage from './auth/SignupPage';
 
 
 function App() {
