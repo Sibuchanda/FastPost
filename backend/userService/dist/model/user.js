@@ -4,5 +4,6 @@ const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     gender: { type: String, enum: ["male", "female"], required: true },
+    saltValue: { type: String, required: true },
 }, { timestamps: true });
 export default mongoose.model("User", UserSchema);

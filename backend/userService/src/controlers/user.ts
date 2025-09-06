@@ -5,7 +5,7 @@ import { redisClient } from "../index.js";
 import User from "../model/User.js";
 import { generateToken } from "../config/generateToken.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.js";
-import bcrypt from "bcryptjs";
+import crypto from "crypto"; 
 
 
 // -- SignUp ---
@@ -63,12 +63,16 @@ export const verifySignupUser = TryCatch(async (req, res) => {
         res.status(400).json({ message: "User already exists" });
         return;
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user = await User.create({ 
-        name, 
-        email, 
-        password: hashedPassword, 
-        gender 
+
+    const saltValue = crypto.randomBytes(16).toString("hex");
+
+    const hashedPassword = crypto.createHash("sha256").update(saltValue + password).digest("hex");
+    user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        gender,
+        saltValue,
     });
 
     await redisClient.del(otpKey);
@@ -87,8 +91,8 @@ export const loginUser = TryCatch(async (req, res) => {
         res.status(400).json({ message: "User not found, please signup" });
         return;
     }
-     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+     const hashedInputPassword = crypto.createHash("sha256").update(user.saltValue + password).digest("hex");
+    if (hashedInputPassword !== user.password) {
         res.status(400).json({ message: "Invalid credentials" });
         return;
     }

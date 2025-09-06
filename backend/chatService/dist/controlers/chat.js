@@ -5,7 +5,7 @@ import { Messages } from "../models/Messages.js";
 import { getRecieverSocketId, io } from "../config/socket.js";
 export const createNewChat = TryCatch(async (req, res) => {
     const userId = req.user?._id;
-    console.log("UserID in createNewChat:", req.user?._id);
+    // console.log("UserID in createNewChat:", req.user?._id);
     const { otherUserId } = req.body;
     if (!otherUserId) {
         res.status(400).json({
