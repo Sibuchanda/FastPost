@@ -19,12 +19,12 @@ export const getRecieverSocketId = (recieverId: string): string | undefined => {
 };
 
 io.on("connection", (socket: Socket) => {
-  console.log("User Connected", socket.id);
+  // console.log("User Connected", socket.id);
 
   const userId = socket.handshake.query.userId as string | undefined;
   if (userId && userId !== "undefined") {
     userSocketMap[userId] = socket.id;
-    console.log(`User ${userId} mapped to socket ${socket.id}`);
+    // console.log(`User ${userId} mapped to socket ${socket.id}`);
   }
 
   io.emit("getOnlineUser", Object.keys(userSocketMap));
@@ -34,7 +34,7 @@ io.on("connection", (socket: Socket) => {
   }
 
   socket.on("typing", (data) => {
-    console.log(`User ${data.userId} is typing in chat ${data.chatId}`);
+    // console.log(`User ${data.userId} is typing in chat ${data.chatId}`);
     socket.to(data.chatId).emit("userTyping", {
       chatId: data.chatId,
       userId: data.userId,
@@ -42,7 +42,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("stopTyping", (data) => {
-    console.log(`User ${data.userId} stopped typing in chat ${data.chatId}`);
+    // console.log(`User ${data.userId} stopped typing in chat ${data.chatId}`);
     socket.to(data.chatId).emit("userStoppedTyping", {
       chatId: data.chatId,
       userId: data.userId,
@@ -51,17 +51,16 @@ io.on("connection", (socket: Socket) => {
 
   socket.on("joinChat", (chatId) => {
     socket.join(chatId);
-    console.log(`User ${userId} joined chat room ${chatId}`);
+    // console.log(`User ${userId} joined chat room ${chatId}`);
   });
 
   socket.on("leaveChat", (chatId) => {
     socket.leave(chatId);
-    console.log(`User ${userId} left chat room ${chatId}`);
+    // console.log(`User ${userId} left chat room ${chatId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log("User Disconnected", socket.id);
-
+    // console.log("User Disconnected", socket.id);
     if (userId) {
       delete userSocketMap[userId];
       console.log(`User ${userId} removed from online users`);

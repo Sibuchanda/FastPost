@@ -10,7 +10,7 @@ import ChatHeader from "../component/ChatHeader";
 import ChatMessages from "../component/ChatMessages";
 import MessageInput from "../component/MessageInput";
 import { SocketData } from "../context/SocketContext";
-import { Socket } from "socket.io-client";
+
 
 export interface Message {
   _id: string;

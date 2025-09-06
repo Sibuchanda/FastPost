@@ -84,10 +84,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }
 
   async function logoutUser() {
-    Cookies.remove("token");
-    setUser(null);
-    setIsAuth(false);
-    toast.success("User Logged Out successfully");
+    const userRespose = confirm("Do you want to logout?");
+    if (userRespose) {
+      Cookies.remove("token");
+      setUser(null);
+      setIsAuth(false);
+      toast.success("User Logged Out successfully");
+    }
   }
 
   const [chats, setChats] = useState<Chats[] | null>(null);
@@ -129,7 +132,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AppContext.Provider value={{ user, setUser, isAuth, setIsAuth, loading, logoutUser, fetchChats, fetchUsers, chats, users, setChats }}>
+    <AppContext.Provider
+      value={{
+        user,
+        setUser,
+        isAuth,
+        setIsAuth,
+        loading,
+        logoutUser,
+        fetchChats,
+        fetchUsers,
+        chats,
+        users,
+        setChats,
+      }}
+    >
       {children} <Toaster />
     </AppContext.Provider>
   );
