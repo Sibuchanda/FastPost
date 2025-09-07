@@ -4,18 +4,32 @@ import { redisClient } from "../index.js";
 import User from "../model/User.js";
 import { generateToken } from "../config/generateToken.js";
 import crypto from "crypto";
+import axios from "axios";
 // -- SignUp ---
 export const signupUser = TryCatch(async (req, res) => {
-    const { name, email, password, gender } = req.body;
-    if (!name || !email || !password || !gender) {
+    const { name, email, password, gender, captcha } = req.body;
+    if (!name || !email || !password || !gender || !captcha) {
         res.status(400).json({ message: "All fields are required" });
+        return;
+    }
+    //Verifying CAPTCHA token
+    try {
+        const googleRes = await axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captcha}`);
+        if (!googleRes.data.success) {
+            res.status(400).json({ message: "CAPTCHA verification failed" });
+            return;
+        }
+    }
+    catch (err) {
+        console.error("CAPTCHA verification error:", err);
+        res.status(500).json({ message: "Error verifying CAPTCHA" });
         return;
     }
     const rateLimitKey = `otp:ratelimit:${email}`;
     const rateLimit = await redisClient.get(rateLimitKey);
     if (rateLimit) {
         res.status(429).json({
-            message: "Too many requests. Please wait before requesting for a new OTP"
+            message: "Too many requests. Please wait before requesting for a new OTP",
         });
         return;
     }
@@ -27,7 +41,7 @@ export const signupUser = TryCatch(async (req, res) => {
     const message = {
         to: email,
         subject: "Your OTP verification code",
-        body: `Dear ${name}, Your 6 digit OTP is : ${otp}. It is valid for 5 minutes`
+        body: `Dear ${name}, Your 6 digit OTP is : ${otp}. It is valid for 5 minutes`,
     };
     await publishToQueue("send-otp", message);
     res.status(200).json({ message: "OTP sent to your mail successfully" });
@@ -57,7 +71,10 @@ export const verifySignupUser = TryCatch(async (req, res) => {
         return;
     }
     const saltValue = crypto.randomBytes(16).toString("hex");
-    const hashedPassword = crypto.createHash("sha256").update(saltValue + password).digest("hex");
+    const hashedPassword = crypto
+        .createHash("sha256")
+        .update(saltValue + password)
+        .digest("hex");
     user = await User.create({
         name,
         email,
@@ -80,7 +97,10 @@ export const loginUser = TryCatch(async (req, res) => {
         res.status(400).json({ message: "User not found, please signup" });
         return;
     }
-    const hashedInputPassword = crypto.createHash("sha256").update(user.saltValue + password).digest("hex");
+    const hashedInputPassword = crypto
+        .createHash("sha256")
+        .update(user.saltValue + password)
+        .digest("hex");
     if (hashedInputPassword !== user.password) {
         res.status(400).json({ message: "Invalid credentials" });
         return;
@@ -89,7 +109,7 @@ export const loginUser = TryCatch(async (req, res) => {
     res.status(200).json({
         message: "Signin successful",
         user,
-        token
+        token,
     });
 });
 //---Resend OTP----

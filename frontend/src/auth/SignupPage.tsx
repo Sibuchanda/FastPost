@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppData, user_service } from "../context/AppContext";
 import Loading from "../verify/Loading";
+import ReCAPTCHA from "react-google-recaptcha";
 
 type Gender = "male" | "female";
 
@@ -25,13 +26,20 @@ const SignUp = () => {
     gender: "male",
   });
   const [loading, setLoading] = useState<boolean>(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const navigateTo = useNavigate();
 
   const { isAuth, loading: userLoading } = useAppData();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCaptcha = (token: string | null) => {
+    setCaptchaToken(token);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -39,6 +47,10 @@ const SignUp = () => {
 
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords and Confirm Password must be same.");
+      return;
+    }
+    if (!captchaToken) {
+      alert("Please complete the CAPTCHA!");
       return;
     }
 
@@ -49,6 +61,7 @@ const SignUp = () => {
         email: form.email,
         password: form.password,
         gender: form.gender,
+        captcha: captchaToken,
       });
       toast.success(data?.message || "OTP sent to your email");
       navigateTo(`/verify?email=${encodeURIComponent(form.email)}`);
@@ -68,9 +81,14 @@ const SignUp = () => {
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-8">
           <div className="text-center mb-8">
             <div className="mx-auto w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center mb-6">
-              <img className="text-white rounded-2xl bg-white" src="/appLogo.png" />
+              <img
+                className="text-white rounded-2xl bg-white"
+                src="/appLogo.png"
+              />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-3">Create Account</h1>
+            <h1 className="text-4xl font-bold text-white mb-3">
+              Create Account
+            </h1>
             <p className="text-gray-300 text-lg">Sign up to continue</p>
           </div>
 
@@ -119,6 +137,12 @@ const SignUp = () => {
               onChange={handleChange}
               required
               className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+            />
+
+            {/* reCAPTCHA Widget */}
+            <ReCAPTCHA
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={handleCaptcha}
             />
 
             <button
