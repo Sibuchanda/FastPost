@@ -6,7 +6,21 @@ import { generateToken } from "../config/generateToken.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.js";
 import crypto from "crypto";
 import axios from "axios";
+import { z } from "zod";
 
+
+// Validating User Schema using Zod library
+export const signupSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  name: z
+    .string()
+    .min(3, { message: "Username should be at least 3 characters long" })
+    .max(35, { message: "Username should be maximum 35 characters long" }),
+  password: z
+    .string()
+    .min(8, { message: "Password should be at least 8 characters long" })
+    .max(25, { message: "Password should be maximum 25 characters long" }),
+});
 
 interface RecaptchaResponse {
   success: boolean;
@@ -20,6 +34,14 @@ export const signupUser = TryCatch(async (req, res) => {
   const { name, email, password, gender, captcha } = req.body;
   if (!name || !email || !password || !gender || !captcha) {
     res.status(400).json({ message: "All fields are required" });
+    return;
+  }
+
+  const validation = signupSchema.safeParse({ email, name, password });
+//   console.log(validation);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0]?.message || "Invalid input";
+    res.status(400).json({ message: firstError });
     return;
   }
 
