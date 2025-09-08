@@ -32,7 +32,7 @@ const MessageInput = ({
   return (
       <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 border-t border-gray-700 pt-2"
+      className="flex flex-col gap-2 pt-2"
     >
       {imageFile && (
         <div className="relative w-fit">
@@ -52,8 +52,8 @@ const MessageInput = ({
       )}
 
       <div className="flex items-center gap-2">
-        <label className="cursor-pointer bg-gray-700 hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors">
-          <Paperclip size={18} className="text-gray-300" />
+        <label className="cursor-pointer bg-gray-200 hover:bg-gray-400 rounded-lg px-3 py-2 transition-colors">
+          <Paperclip size={18} className="text-black" />
           <input
             type="file"
             accept="image/*"
@@ -69,7 +69,7 @@ const MessageInput = ({
 
         <input
           type="text"
-          className="flex-1 bg-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400"
+          className="flex-1 bg-gray-200 rounded-lg px-4 py-2 text-black placeholder-black border border-gray-300 focus:outline-none focus:border-blue-400"
           placeholder={imageFile ? "Add a caption..." : "Type a message..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -78,7 +78,7 @@ const MessageInput = ({
         <button
           type="submit"
           disabled={(!imageFile && !message) || isUploading}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed text-white cursor-pointer"
         >
           {isUploading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

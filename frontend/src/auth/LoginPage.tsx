@@ -13,12 +13,10 @@ interface SignInForm {
 }
 
 const LoginPage = () => {
-  
   const [form, setForm] = useState<SignInForm>({ email: "", password: "" });
   const [loading, setLoading] = useState<boolean>(false);
+  const { isAuth, loading: userLoading, setIsAuth, setUser, fetchChats, fetchUsers } = useAppData();
   const navigateTo = useNavigate();
-
-    const { isAuth, loading: userLoading, setIsAuth, setUser, fetchChats, fetchUsers } =  useAppData();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,17 +45,16 @@ const LoginPage = () => {
 
   if (userLoading) return <Loading />;
   if (isAuth) navigateTo("/chat");
-
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-8">
+        <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <div className="mx-auto w-20 h-20 bg-gray-800 rounded-lg flex items-center justify-center mb-6">
-              <img className="text-white rounded-2xl bg-white" src="/appLogo.png" />
+            <div className="mx-auto w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+              <img src="/appLogo.png" alt="App Logo" className="w-12 h-12 object-contain" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-3">Welcome Back</h1>
-            <p className="text-gray-300 text-lg">Sign in to continue</p>
+            <h1 className="text-4xl font-bold text-blue-700 mb-3">Welcome Back</h1>
+            <p className="text-gray-600 text-lg">Sign in to continue</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,7 +65,7 @@ const LoginPage = () => {
               value={form.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
             />
             <input
               type="password"
@@ -77,12 +74,12 @@ const LoginPage = () => {
               value={form.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
             />
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100"
               disabled={loading}
             >
               {loading ? (
@@ -101,9 +98,12 @@ const LoginPage = () => {
 
           {/* Switch to Sign Up */}
           <div className="mt-6 space-y-2">
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-600 text-center">
               Don’t have an account?{" "}
-              <Link to="/signup" className="text-blue-400 hover:underline">
+              <Link
+                to="/signup"
+                className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200"
+              >
                 Sign Up
               </Link>
             </p>

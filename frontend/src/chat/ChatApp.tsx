@@ -362,8 +362,8 @@ const ChatApp = () => {
   }, [typingTimeOut]);
 
   if (loading) return <Loading />;
-  return (
-    <div className="min-h-screen flex bg-gray-900 text-white relative overflow-hidden">
+   return (
+    <div className="h-screen flex bg-gray-100 text-gray-900 relative overflow-hidden">
       <ChatSidebar
         sidebarOpen={siderbarOpen}
         setSidebarOpen={setSiderbarOpen}
@@ -378,7 +378,8 @@ const ChatApp = () => {
         createChat={createChat}
         onlineUsers={onlineUsers}
       />
-      <div className="flex-1 flex flex-col justify-between p-4 backdrop-blur-xl bg-white/5 border-1 border-white/10">
+
+      <div className="flex-1 flex flex-col justify-between p-6">
         <ChatHeader
           user={user}
           setSidebarOpen={setSiderbarOpen}
@@ -386,18 +387,22 @@ const ChatApp = () => {
           onlineUsers={onlineUsers}
         />
 
-        <ChatMessages
-          selectedUser={selectedUser}
-          messages={messages}
-          loggedInUser={loggedInUser}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <ChatMessages
+            selectedUser={selectedUser}
+            messages={messages}
+            loggedInUser={loggedInUser}
+          />
+        </div>
 
-        <MessageInput
-          selectedUser={selectedUser}
-          message={message}
-          setMessage={handleTyping}
-          handleMessageSend={handleMessageSend}
-        />
+        <div className="mt-4">
+          <MessageInput
+            selectedUser={selectedUser}
+            message={message}
+            setMessage={handleTyping}
+            handleMessageSend={handleMessageSend}
+          />
+        </div>
       </div>
     </div>
   );
