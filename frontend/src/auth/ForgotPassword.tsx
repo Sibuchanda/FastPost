@@ -3,48 +3,29 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useAppData, user_service } from "../context/AppContext";
-import Loading from "../verify/Loading";
-import Cookies from "js-cookie";
+import { user_service } from "../context/AppContext";
 
-interface SignInForm {
-  email: string;
-  password: string;
-}
-
-const LoginPage = () => {
-  const [form, setForm] = useState<SignInForm>({ email: "", password: "" });
+const ForgotPassword = () => {
+  const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const { isAuth, loading: userLoading, setIsAuth, setUser, fetchChats, fetchUsers } = useAppData();
   const navigateTo = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       setLoading(true);
-      const { data } = await axios.post(`${user_service}/api/v1/login`, form);
-      Cookies.set("token", data.token, { expires: 15, secure: false, path: "/" });
-      setUser(data.user);
-      setIsAuth(true);
-      await fetchChats();
-      await fetchUsers();
-      navigateTo("/chat");
-      toast.success(data?.message || "Signed in successfully");
+      const { data } = await axios.post(`${user_service}/api/v1/forgotpassword`, { email });
+      toast.success(data?.message || "Password reset link sent to your email");
+      setEmail("");
+      navigateTo(`/verify?email=${encodeURIComponent(email)}&mode=forgot`);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Signin failed");
+      toast.error(error?.response?.data?.message || "Failed to send reset link");
     } finally {
       setLoading(false);
     }
   };
 
-  if (userLoading) return <Loading />;
-  if (isAuth) navigateTo("/chat");
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -53,39 +34,19 @@ const LoginPage = () => {
             <div className="mx-auto w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
               <img src="/appLogo.png" alt="App Logo" className="w-12 h-12 object-contain" />
             </div>
-            <h1 className="text-4xl font-bold text-blue-700 mb-3">Welcome Back</h1>
-            <p className="text-gray-600 text-lg">Sign in to continue</p>
+            <h1 className="text-3xl font-bold text-blue-700 mb-3">Forgot Password</h1>
+            <p className="text-gray-600 text-lg">Enter your email to reset password</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="email"
-              name="email"
               placeholder="Email address"
-              value={form.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
             />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
-            />
-
-             {/* Forgot Password */}
-            <div className="text-right">
-              <Link
-                to="/forgotpassword"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200"
-              >
-                Forgot Password?
-              </Link>
-            </div>
 
             <button
               type="submit"
@@ -95,26 +56,26 @@ const LoginPage = () => {
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Signing in...
+                  Sending...
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <span>Sign In</span>
+                  <span>Send Reset Link</span>
                   <ArrowRight className="w-5 h-5" />
                 </div>
               )}
             </button>
           </form>
 
-          {/* Switch to Sign Up */}
+          {/* Back to Login */}
           <div className="mt-6 space-y-2">
             <p className="text-gray-600 text-center">
-              Don’t have an account?{" "}
+              Remember your password?{" "}
               <Link
-                to="/signup"
+                to="/login"
                 className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200"
               >
-                Sign Up
+                Back to Login
               </Link>
             </p>
           </div>
@@ -124,4 +85,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgotPassword;

@@ -6,6 +6,8 @@ import LoginPage from './auth/LoginPage';
 import VerifyPage from './verify/VerifyPage';
 import ProfilePage from './profile/ProfilePage';
 import SignupPage from './auth/SignupPage';
+import ForgotPassword from './auth/ForgotPassword';
+import ResetPassword from './auth/ResetPassword';
 
 
 function App() {
@@ -34,6 +36,14 @@ function App() {
     {
       path: "/profile",
       element: <ProfilePage/>
+    },
+    {
+      path: "/forgotpassword",
+      element: <ForgotPassword/>
+    },
+    {
+      path: "/resetpassword",
+      element: <ResetPassword/>
     }
   ]);
 
