@@ -368,7 +368,6 @@ export const resetPassword = TryCatch(async (req, res) => {
     res.status(404).json({ message: "User not found" });
     return;
   }
-
   const saltValue = crypto.randomBytes(16).toString("hex");
   const hashedPassword = crypto.createHash("sha256").update(saltValue + password).digest("hex");
   user.password = hashedPassword;

@@ -1,15 +1,15 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { ArrowLeft, Save, User, UserCircle } from "lucide-react";
+import { ArrowLeft, UserCircle } from "lucide-react";
 import { useAppData, user_service } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import Loading from "../verify/Loading";
 
 const ProfilePage = () => {
-  const { user, isAuth, loading, setUser } = useAppData();
+  const { user, isAuth, loading, setUser, logoutUser } = useAppData();
   const [isEdit, setIsEdit] = useState(false);
   const [name, setName] = useState<string | undefined>("");
   const navigate = useNavigate();
@@ -53,94 +53,108 @@ const ProfilePage = () => {
     }
   }, [isAuth, navigate, loading]);
 
+  // -- Logout Function --
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/login");
+  };
+
   if (loading) return <Loading />;
   return (
-    <div className="min-h-screen bg-gray-900 p-4">
-      <div className="max-w-2xl mx-auto pt-8">
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate("/chat")}
-            className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-300" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
-            <p className="text-gray-400 mt-1">
-              Manage your account information
-            </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 bg-white shadow-sm sticky top-0">
+        <button
+          onClick={() => navigate("/chat")}
+          className="p-2 rounded-full hover:bg-gray-100 cursor-pointer"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
+        </button>
+        <h1 className="text-lg font-semibold text-gray-800">Profile</h1>
+        <div className="w-5" />
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {/* Profile Header */}
+        <div className="flex flex-col items-center mt-8 mb-6">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center shadow-md">
+              <UserCircle className="w-16 h-16 text-gray-500" />
+            </div>
+            <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+          </div>
+          <h2 className="mt-4 text-xl font-bold text-gray-800">
+            {user?.name || "User"}
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">Active now</p>
+        </div>
+
+        {/* Settings List */}
+        <div className="bg-white rounded-xl shadow-sm mx-4 overflow-hidden border border-gray-200">
+          {/* Display Name */}
+          <div className="border-b border-gray-200">
+            <div className="flex items-center justify-between p-4">
+              <div>
+                <p className="text-sm text-gray-500">Display Name</p>
+                {isEdit ? (
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 px-3 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800"
+                  />
+                ) : (
+                  <p className="text-gray-800 font-medium">
+                    {user?.name || "Not set"}
+                  </p>
+                )}
+              </div>
+              {isEdit ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={submitHandler}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 cursor-pointer"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={editHandler}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={editHandler}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold cursor-pointer"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="p-4 border-b border-gray-200">
+            <p className="text-sm text-gray-500">Email</p>
+            <p className="text-gray-800 font-medium">{user?.email || "—"}</p>
+          </div>
+
+          {/* About */}
+          <div className="p-4">
+            <p className="text-sm text-gray-500">About</p>
+            <p className="text-gray-800 font-medium">Available</p>
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg">
-          <div className="bg-gray-700 p-8 border-b border-gray-600">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-gray-600 flex items-center justify-center">
-                  <UserCircle className="w-12 h-12 text-gray-300" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-gray-800"></div>
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white mb-1">
-                  {user?.name || "User"}
-                </h2>
-                <p className="text-gray-300 text-sm">Active now</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-8">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-3">
-                  Display Name
-                </label>
-
-                {isEdit ? (
-                  <form onSubmit={submitHandler} className="space-y-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-                      />
-                      <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
-                      >
-                        <Save className="w-4 h-4" /> Save Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={editHandler}
-                        className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg border border-gray-600">
-                    <span className="text-white font-medium text-lg">
-                      {user?.name || "Not set"}
-                    </span>
-                    <button
-                      onClick={editHandler}
-                      className="flex items-center gap-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* Logout Button */}
+        <div className="px-4 mt-8 mb-6">
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 text-center text-red-600 border border-red-200 rounded-lg font-semibold hover:bg-red-100 cursor-pointer"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </div>
