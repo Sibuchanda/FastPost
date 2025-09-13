@@ -305,7 +305,7 @@ export const forgotPassword = TryCatch(async (req, res) => {
   const otpKey = `forgot:otp:${email}`;
   await redisClient.set(
     otpKey,
-    JSON.stringify({ otp }),
+    otp,
     { EX: 300 }
   );
 

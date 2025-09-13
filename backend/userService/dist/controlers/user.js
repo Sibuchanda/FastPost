@@ -267,7 +267,7 @@ export const forgotPassword = TryCatch(async (req, res) => {
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpKey = `forgot:otp:${email}`;
-    await redisClient.set(otpKey, JSON.stringify({ otp }), { EX: 300 });
+    await redisClient.set(otpKey, otp, { EX: 300 });
     await redisClient.set(rateLimitKey, "true", { EX: 60 });
     const message = {
         to: email,
