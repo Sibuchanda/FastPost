@@ -4,6 +4,10 @@ A modern real-time chat application built with a **microservices architecture**,
 
 This repository contains all backend and frontend services of the project.
 
+## System Architecture
+![FastPost2](https://github.com/user-attachments/assets/a44fe828-8ff9-44f7-ba4f-8b49629f08d3)
+
+
 ## Video
 https://github.com/user-attachments/assets/9e48c4e0-1128-4669-a8f7-691c565d0776
 
